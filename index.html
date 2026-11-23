@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Confluência Cooperativa de Crédito</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400;1,8..60,500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --night: #0F201C;
+      --ink: #16352E;
+      --river: #2E6A5C;
+      --signal: #E2A945;
+      --paper: #FFFFFF;
+      --page: #F3F0E8;
+      --text: #1F2522;
+      --muted: #5D6A64;
+      --rule: #DDD7C9;
+      --navy: #1B3A6B;
+      --serif: 'Source Serif 4', Georgia, serif;
+      --sans: 'IBM Plex Sans', system-ui, sans-serif;
+      --wrap: 1120px;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: var(--sans); background: var(--paper); color: var(--text); -webkit-font-smoothing: antialiased; }
+    a { color: inherit; }
+    img { display: block; }
+    :focus-visible { outline: 2px solid var(--signal); outline-offset: 3px; }
+    .wrap { max-width: var(--wrap); margin: 0 auto; padding: 0 40px; }
+
+    /* ─── Duotone: todas as fotos passam por aqui ─── */
+    .duo { position: relative; overflow: hidden; background: var(--river); }
+    .duo img { width: 100%; height: 100%; object-fit: cover; filter: grayscale(1) contrast(1.15) brightness(1.05); mix-blend-mode: multiply; transition: filter .5s ease; }
+    .duo::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(15,32,28,0.10), rgba(15,32,28,0.45)); pointer-events: none; transition: opacity .5s ease; }
+    a:hover .duo img, .duo.live:hover img { filter: none; mix-blend-mode: normal; }
+    a:hover .duo::after, .duo.live:hover::after { opacity: 0; }
+
+    /* ─── Navegação ─── */
+    .topnav { position: absolute; top: 0; left: 0; right: 0; z-index: 50; }
+    .topnav .wrap { display: flex; align-items: center; justify-content: space-between; height: 76px; }
+    .logo { font-family: var(--serif); font-weight: 600; font-size: 20px; color: #fff; text-decoration: none; display: flex; align-items: center; gap: 12px; }
+    .logo svg { width: 26px; height: 26px; flex: none; }
+    .topnav ul { list-style: none; display: flex; gap: 28px; }
+    .topnav a.link { color: rgba(255,255,255,0.78); text-decoration: none; font-size: 15px; font-weight: 500; padding: 6px 0; border-bottom: 1px solid transparent; }
+    .topnav a.link:hover { color: #fff; }
+    .topnav a.link.active { color: #fff; border-bottom-color: var(--signal); }
+
+    .page { display: none; }
+    .page.active { display: block; }
+
+    /* ─── Abertura das páginas ─── */
+    .opening { position: relative; min-height: 78vh; display: flex; align-items: flex-end; color: #fff; background: var(--night); }
+    .opening .duo { position: absolute; inset: 0; }
+    .opening .duo::after { background: linear-gradient(180deg, rgba(15,32,28,0.55) 0%, rgba(15,32,28,0.22) 35%, rgba(15,32,28,0.92) 100%); }
+    .opening .duo:hover img { filter: grayscale(1) contrast(1.15) brightness(1.05); mix-blend-mode: multiply; }
+    .opening .wrap { position: relative; z-index: 2; padding-bottom: 72px; padding-top: 140px; width: 100%; }
+    .place { font-size: 15px; color: rgba(255,255,255,0.75); margin-bottom: 18px; display: flex; align-items: center; gap: 12px; }
+    .place::before { content: ''; width: 36px; height: 2px; background: var(--signal); }
+    .opening h1 { font-family: var(--serif); font-weight: 600; font-size: clamp(40px, 6vw, 86px); line-height: 1.02; letter-spacing: -0.02em; max-width: 16ch; }
+    .opening .sub { font-family: var(--serif); font-size: clamp(18px, 1.7vw, 23px); line-height: 1.5; color: rgba(255,255,255,0.86); max-width: 54ch; margin-top: 24px; }
+    .opening.home { min-height: 100vh; }
+    .opening.home h1 { font-size: clamp(56px, 9vw, 132px); }
+    .opening.home h1 span { display: block; font-size: 0.34em; font-weight: 400; font-style: italic; letter-spacing: 0; margin-top: 12px; color: rgba(255,255,255,0.82); }
+    .facts { display: flex; flex-wrap: wrap; gap: 0 48px; margin-top: 40px; padding-top: 18px; border-top: 1px solid rgba(255,255,255,0.22); max-width: 820px; }
+    .facts div { padding-top: 4px; }
+    .facts strong { display: block; font-family: var(--serif); font-weight: 600; font-size: 30px; color: #fff; line-height: 1.1; }
+    .facts span { font-size: 13.5px; color: rgba(255,255,255,0.68); }
+    .cta { display: inline-block; margin-top: 40px; background: #fff; color: var(--ink); text-decoration: none; font-weight: 600; font-size: 15.5px; padding: 15px 24px; border-radius: 2px; }
+    .cta:hover { background: var(--signal); }
+    @media (prefers-reduced-motion: no-preference) {
+      .opening.home .duo img { animation: drift 18s ease-out both; }
+      @keyframes drift { from { transform: scale(1.08); } to { transform: scale(1); } }
+    }
+
+    /* ─── Texto corrido ─── */
+    section.block { padding: 112px 0; }
+    .statement { display: grid; grid-template-columns: 5fr 6fr; gap: 72px; align-items: start; }
+    .statement h2 { font-family: var(--serif); font-weight: 600; font-size: clamp(30px, 3.2vw, 44px); line-height: 1.15; color: var(--ink); letter-spacing: -0.01em; position: sticky; top: 32px; }
+    .prose p { font-family: var(--serif); font-size: 19.5px; line-height: 1.72; color: var(--text); margin-bottom: 22px; max-width: 62ch; }
+    .prose p:last-child { margin-bottom: 0; }
+
+    /* ─── Porta de entrada ─── */
+    .door { display: grid; grid-template-columns: 7fr 5fr; text-decoration: none; background: var(--night); color: #fff; min-height: 440px; }
+    .door .duo { min-height: 320px; }
+    .door .txt { padding: 56px 52px; display: flex; flex-direction: column; justify-content: flex-end; }
+    .door .kicker { font-size: 14px; color: rgba(255,255,255,0.65); margin-bottom: 14px; }
+    .door h3 { font-family: var(--serif); font-weight: 600; font-size: 38px; line-height: 1.1; }
+    .door p { color: rgba(255,255,255,0.75); font-size: 16px; line-height: 1.6; margin-top: 16px; max-width: 40ch; }
+    .door .go { margin-top: 28px; font-weight: 600; color: var(--signal); }
+    .door:hover .go { text-decoration: underline; text-underline-offset: 5px; }
+    .chapters { padding: 96px 0 112px; }
+    h2.sec { font-family: var(--serif); font-weight: 600; font-size: 36px; color: var(--ink); margin-bottom: 32px; }
+
+    /* ─── Mapa da área de atuação ─── */
+    .reach { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 0; border-top: 2px solid var(--ink); margin-top: 8px; }
+    .reach div { padding: 24px 22px 0 0; }
+    .reach .r-when { font-size: 13.5px; font-weight: 500; color: var(--river); }
+    .reach h4 { font-family: var(--serif); font-size: 22px; font-weight: 600; color: var(--ink); margin: 6px 0 8px; }
+    .reach p { font-size: 15px; line-height: 1.55; color: var(--muted); }
+
+    /* ─── Cronologia ─── */
+    .chrono { list-style: none; }
+    .beat { display: grid; grid-template-columns: 120px minmax(0, 1fr) 300px; gap: 40px; padding: 36px 0; border-top: 1px solid var(--rule); align-items: start; }
+    .beat:last-child { border-bottom: 1px solid var(--rule); }
+    .beat .year { font-family: var(--serif); font-size: 40px; font-weight: 600; line-height: 1; color: var(--river); }
+    .beat p { font-family: var(--serif); font-size: 19px; line-height: 1.7; max-width: 60ch; }
+    .beat .duo { aspect-ratio: 4 / 3; border-radius: 2px; }
+    .beat.plain { grid-template-columns: 120px minmax(0, 1fr); }
+
+    /* ─── A pergunta ─── */
+    .question { position: relative; color: #fff; padding: 150px 0; background: var(--night); }
+    .question .duo { position: absolute; inset: 0; }
+    .question .duo::after { background: rgba(15,32,28,0.80); }
+    .question .wrap { position: relative; z-index: 2; }
+    .question blockquote { font-family: var(--serif); font-style: italic; font-weight: 500; font-size: clamp(30px, 4vw, 54px); line-height: 1.18; max-width: 22ch; letter-spacing: -0.01em; }
+    .question blockquote::before { content: '“'; display: block; font-size: 1.8em; line-height: 0.6; color: var(--signal); font-style: normal; margin-bottom: 12px; }
+    .question .who { margin-top: 32px; font-size: 16px; color: rgba(255,255,255,0.72); }
+    .question .then { margin-top: 56px; font-family: var(--serif); font-size: 20px; line-height: 1.6; color: rgba(255,255,255,0.88); max-width: 54ch; }
+
+    /* ─── Stakeholders ─── */
+    .task { display: grid; grid-template-columns: 5fr 6fr; gap: 72px; margin-bottom: 64px; align-items: end; }
+    .task h2 { font-family: var(--serif); font-weight: 600; font-size: clamp(34px, 3.6vw, 50px); line-height: 1.05; color: var(--ink); }
+    .task p { font-size: 17px; line-height: 1.65; max-width: 56ch; }
+    .task p + p { margin-top: 14px; color: var(--muted); }
+    .dossier { display: grid; grid-template-columns: 1fr 1fr; column-gap: 64px; }
+    .file { display: grid; grid-template-columns: 148px minmax(0, 1fr); gap: 26px; padding: 34px 0; border-top: 1px solid var(--rule); align-items: start; }
+    .file .duo { aspect-ratio: 1; border-radius: 2px; }
+    .file .rel { font-size: 13.5px; font-weight: 500; color: var(--river); margin-bottom: 6px; }
+    .file h3 { font-family: var(--serif); font-size: 23px; font-weight: 600; line-height: 1.2; color: var(--ink); margin-bottom: 12px; }
+    .file p { font-size: 15px; line-height: 1.62; }
+    .file .stake { margin-top: 14px; font-size: 14.5px; line-height: 1.5; color: var(--muted); padding-left: 14px; border-left: 2px solid var(--signal); }
+    .file .stake strong { color: var(--ink); font-weight: 600; }
+    .key-link { margin-top: 56px; padding-top: 24px; border-top: 1px solid var(--rule); text-align: right; }
+    .key-link a { font-size: 14px; color: var(--muted); text-decoration: none; }
+    .key-link a:hover { color: var(--river); text-decoration: underline; }
+
+    /* ─── Matriz (cores do slide FGV) ─── */
+    .classify { margin-top: 96px; padding-top: 56px; border-top: 2px solid var(--ink); }
+    .classify .task { margin-bottom: 40px; }
+    .crit { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 40px; }
+    .crit > div { background: var(--page); padding: 22px 26px; border-left: 3px solid var(--signal); }
+    .crit .k { font-size: 14px; font-weight: 600; color: var(--river); }
+    .crit p { font-family: var(--serif); font-size: 21px; line-height: 1.4; color: var(--ink); margin-top: 6px; }
+    .matrix-wrap { margin-bottom: 88px; }
+    .matrix { display: grid; grid-template-columns: 40px 1fr; }
+    .axis-y { display: flex; flex-direction: column; justify-content: space-between; align-items: center; font-size: 13px; color: var(--muted); padding: 4px 0; }
+    .axis-y b { writing-mode: vertical-rl; transform: rotate(180deg); font-size: 14px; font-weight: 600; letter-spacing: .08em; color: var(--navy); }
+    .quads { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .quad { padding: 28px 30px; min-height: 200px; border-radius: 8px; color: var(--navy); }
+    .quad h4 { font-size: 15px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; margin-bottom: 16px; }
+    .matrix.blank .quad { min-height: 170px; display: flex; align-items: center; justify-content: center; text-align: center; }
+    .matrix.blank .quad h4 { font-size: clamp(15px, 1.6vw, 20px); margin: 0; }
+    .quad ul { list-style: none; }
+    .quad li { font-family: var(--serif); font-size: 20px; line-height: 1.5; }
+    .q-hl { background: #F6E3B8; }
+    .q-hh { background: #C5E2F0; }
+    .q-ll { background: #DEDDE8; }
+    .q-lh { background: #D2E8D5; }
+    .axis-x { display: flex; justify-content: space-between; margin-top: 12px; padding-left: 40px; font-size: 13px; color: var(--muted); }
+    .axis-x b { font-size: 14px; font-weight: 600; letter-spacing: .08em; color: var(--navy); }
+    .legend { margin-top: 18px; padding-left: 40px; font-size: 14.5px; color: var(--muted); }
+
+    .why { list-style: none; }
+    .why li { display: grid; grid-template-columns: 260px minmax(0, 1fr); gap: 40px; padding: 26px 0; border-top: 1px solid var(--rule); }
+    .why li:last-child { border-bottom: 1px solid var(--rule); }
+    .why .who { font-family: var(--serif); font-size: 21px; font-weight: 600; color: var(--ink); line-height: 1.3; }
+    .why .who small { display: block; font-family: var(--sans); font-size: 13.5px; font-weight: 500; color: var(--river); margin-top: 6px; }
+    .why p { font-size: 16px; line-height: 1.65; max-width: 68ch; }
+
+    /* ─── Próxima etapa ─── */
+    .next { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 32px; align-items: end; padding: 44px 48px; background: var(--night); color: #fff; text-decoration: none; }
+    .next .kicker { font-size: 14px; color: rgba(255,255,255,0.65); margin-bottom: 10px; }
+    .next h3 { font-family: var(--serif); font-weight: 600; font-size: 34px; line-height: 1.1; }
+    .next .go { font-weight: 600; color: var(--signal); white-space: nowrap; }
+    .next:hover .go { text-decoration: underline; text-underline-offset: 5px; }
+
+    /* ─── Envelopes ─── */
+    .envelopes-inline { margin-top: 96px; padding-top: 56px; border-top: 2px solid var(--ink); }
+    .envs { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 20px; margin-top: 8px; }
+    .env { position: relative; aspect-ratio: 5 / 4; border: 1px solid var(--rule); background: #fff; border-radius: 2px; cursor: pointer; font: inherit; color: var(--ink); text-align: left; padding: 0; perspective: 900px; overflow: visible; }
+    .env::before { content: ''; position: absolute; inset: 0; background: linear-gradient(to top right, transparent 49.6%, var(--rule) 50%, transparent 50.4%) left bottom / 50% 70% no-repeat, linear-gradient(to top left, transparent 49.6%, var(--rule) 50%, transparent 50.4%) right bottom / 50% 70% no-repeat; pointer-events: none; }
+    .env .flap { position: absolute; left: -1px; right: -1px; top: -1px; height: 46%; background: var(--ink); clip-path: polygon(0 0, 100% 0, 50% 100%); transform-origin: top center; transition: transform .6s cubic-bezier(.5,0,.2,1), background .6s ease; z-index: 2; }
+    .env .seal { position: absolute; left: 50%; top: 46%; width: 42px; height: 42px; margin: -25px 0 0 -21px; border-radius: 50%; background: var(--signal); color: var(--ink); font-family: var(--serif); font-weight: 700; font-size: 21px; display: flex; align-items: center; justify-content: center; z-index: 3; box-shadow: 0 0 0 4px #fff; transition: opacity .3s ease; }
+    .env .env-label { position: absolute; left: 16px; bottom: 28px; font-family: var(--serif); font-weight: 600; font-size: 19px; z-index: 1; }
+    .env .env-state { position: absolute; left: 16px; bottom: 10px; font-size: 12.5px; color: var(--muted); z-index: 1; }
+    .env:hover { border-color: var(--ink); }
+    .env.armed { border-color: var(--signal); box-shadow: 0 0 0 2px var(--signal); }
+    .env.armed .env-state { color: var(--ink); font-weight: 600; }
+    .env.open { background: var(--page); cursor: default; }
+    .env.open .flap { transform: rotateX(180deg); background: #C9D6CF; }
+    .env.open .seal { opacity: 0; }
+    .env-lock { margin-top: 28px; display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding: 20px 24px; background: var(--page); border-left: 3px solid var(--signal); }
+    .env-lock[hidden] { display: none; }
+    .env-lock label { font-weight: 600; color: var(--ink); font-size: 15px; }
+    .env-lock input { font: inherit; font-size: 16px; padding: 10px 12px; border: 1px solid var(--rule); border-radius: 2px; min-width: 180px; background: #fff; }
+    .env-lock button { font: inherit; font-weight: 600; font-size: 15px; padding: 10px 18px; border: 0; border-radius: 2px; background: var(--ink); color: #fff; cursor: pointer; }
+    .env-lock button:hover { background: var(--river); }
+    .env-err { color: #B3261E; font-size: 14px; }
+    .events { margin-top: 56px; }
+    .event { border-top: 2px solid var(--ink); padding: 40px 0 48px; display: grid; grid-template-columns: 5fr 7fr; gap: 56px; }
+    .event[hidden] { display: none; }
+    .event .ev-group { font-size: 14px; color: var(--river); font-weight: 500; margin-bottom: 10px; }
+    .event h3 { font-family: var(--serif); font-weight: 600; font-size: clamp(30px, 3.2vw, 42px); line-height: 1.08; color: var(--ink); }
+    .event .ev-body p { font-family: var(--serif); font-size: 19px; line-height: 1.7; margin-bottom: 18px; max-width: 62ch; }
+    .event .ev-toninho { margin-top: 24px; background: var(--night); color: #fff; padding: 22px 28px; border-left: 3px solid #C2412D; }
+    .event .ev-toninho h4 { font-size: 13.5px; font-weight: 600; color: #F0A08F; margin-bottom: 8px; letter-spacing: .02em; }
+    .event .ev-toninho p { font-family: var(--serif); font-size: 18px; line-height: 1.6; color: rgba(255,255,255,0.9); }
+    .event .ev-q { margin-top: 28px; background: var(--page); padding: 24px 28px; border-left: 3px solid var(--signal); }
+    .event .ev-q h4 { font-size: 15px; font-weight: 600; color: var(--ink); margin-bottom: 12px; }
+    .event .ev-q p { font-size: 16px; line-height: 1.55; }
+    .reset { background: none; border: none; font: inherit; font-size: 14px; color: var(--muted); cursor: pointer; padding: 0; }
+    .reset:hover { color: var(--river); text-decoration: underline; }
+    .prof-note { font-family: var(--serif); font-size: 19px; line-height: 1.6; color: var(--ink); max-width: 62ch; margin-top: 32px; padding: 24px 28px; background: var(--page); border-left: 3px solid var(--signal); }
+
+    footer { background: var(--night); color: rgba(255,255,255,0.55); font-size: 14px; padding: 40px 0; }
+    footer .wrap { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+
+    /* ─── Responsivo ─── */
+    @media (max-width: 1000px) {
+      .statement, .task { grid-template-columns: 1fr; gap: 28px; }
+      .statement h2 { position: static; }
+      .door { grid-template-columns: 1fr; }
+      .reach { grid-template-columns: 1fr 1fr; }
+      .beat { grid-template-columns: 90px minmax(0, 1fr); }
+      .beat .duo { grid-column: 2; max-width: 420px; }
+      .dossier { grid-template-columns: 1fr; }
+      .envs { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .event { grid-template-columns: 1fr; gap: 20px; }
+      .next { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 640px) {
+      .wrap { padding: 0 18px; }
+      .topnav .wrap { height: 64px; gap: 12px; }
+      .topnav ul { gap: 14px; }
+      .topnav a.link { font-size: 14px; }
+      .logo { font-size: 17px; }
+      .logo span.full { display: none; }
+      .opening .wrap { padding-bottom: 48px; padding-top: 110px; }
+      .facts { gap: 0 28px; }
+      .facts strong { font-size: 24px; }
+      section.block { padding: 72px 0; }
+      .prose p, .beat p { font-size: 17.5px; }
+      .reach { grid-template-columns: 1fr; }
+      .beat, .beat.plain { grid-template-columns: 1fr; gap: 14px; padding: 28px 0; }
+      .beat .year { font-size: 30px; }
+      .beat .duo { grid-column: 1; }
+      .door .txt { padding: 36px 22px; }
+      .door h3 { font-size: 30px; }
+      .question { padding: 96px 0; }
+      .file { grid-template-columns: 92px minmax(0, 1fr); gap: 16px; }
+      .file h3 { font-size: 20px; }
+      .crit { grid-template-columns: 1fr; }
+      .crit p { font-size: 18px; }
+      .matrix { grid-template-columns: 26px 1fr; }
+      .axis-y span { display: none; }
+      .axis-x, .legend { padding-left: 26px; }
+      .quad { padding: 16px; min-height: 130px; }
+      .quad h4 { font-size: 12.5px; }
+      .quad li { font-size: 16px; }
+      .envs { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+      .env .env-label { font-size: 17px; left: 12px; }
+      .env .env-state { left: 12px; }
+      .event .ev-body p { font-size: 17.5px; }
+      .next { padding: 32px 22px; }
+      .next h3 { font-size: 27px; }
+      .why li { grid-template-columns: 1fr; gap: 8px; }
+    }
+    @media (prefers-reduced-motion: reduce) { .duo img, .duo::after, .env .flap, .env .seal { transition: none; } }
+  </style>
+</head>
+<body>
+
+<header class="topnav">
+<div class="wrap">
+<a href="#" class="logo" onclick="return show('inicio')" aria-label="Confluência, início">
+<svg viewBox="0 0 26 26" aria-hidden="true"><path d="M3 3 C 7 9, 11 12, 13 15 M23 3 C 19 9, 15 12, 13 15 M13 15 V24" fill="none" stroke="#E2A945" stroke-width="2.4" stroke-linecap="round"/></svg>
+<span>Confluência<span class="full"> Cooperativa de Crédito</span></span></a>
+<nav aria-label="Seções do case">
+<ul>
+<li><a href="#" class="link active" data-page="inicio" onclick="return show('inicio')">Início</a></li>
+<li><a href="#" class="link" data-page="historia" onclick="return show('historia')">A história</a></li>
+<li><a href="#" class="link" data-page="stakeholders" onclick="return show('stakeholders')">Capítulo 1</a></li>
+</ul>
+</nav>
+</div>
+</header>
+
+<!-- ═════════ INÍCIO ═════════ -->
+<main id="inicio" class="page active">
+<header class="opening home">
+<div class="duo"><img src="https://images.unsplash.com/photo-1762686852371-763b689910b2?auto=format&fit=crop&w=2000&q=80" alt="" /></div>
+<div class="wrap">
+<div class="place">Varginha, Sul de Minas</div>
+<h1>Confluência <span>Cooperativa de Crédito</span></h1>
+<p class="sub">Nasceu entre os cafezais do Sul de Minas e hoje reúne 110 mil donos, que quase nunca se encontram.</p>
+<div class="facts">
+<div><strong>1991</strong><span>fundada por 23 cafeicultores</span></div>
+<div><strong>110 mil</strong><span>cooperados</span></div>
+<div><strong>38</strong><span>postos de atendimento</span></div>
+<div><strong>R$ 3,5 bi</strong><span>em recursos totais</span></div>
+</div>
+<a href="#" class="cta" onclick="return show('historia')">Conhecer a história</a>
+</div>
+</header>
+
+<section class="chapters" id="capitulos">
+<div class="wrap"><h2 class="sec">Capítulos</h2></div>
+<a href="#" class="door chap" onclick="return show('stakeholders')">
+<div class="duo"><img src="https://images.unsplash.com/photo-1626287935075-3275d2d9025e?auto=format&fit=crop&w=1400&q=80" alt="" loading="lazy" /></div>
+<div class="txt">
+<div class="kicker">Capítulo 1</div>
+<h3>Os stakeholders da Confluência</h3>
+<p>Dos 23 cafeicultores de 1991 aos 110 mil cooperados de hoje, e os doze atores de quem a cooperativa depende, ou que dependem dela.</p>
+<span class="go">Abrir o capítulo</span>
+</div>
+</a>
+</section>
+</main>
+
+<!-- ═════════ HISTÓRIA ═════════ -->
+<main id="historia" class="page">
+<header class="opening">
+<div class="duo"><img src="https://images.unsplash.com/photo-1671413945540-eaca7f4257f3?auto=format&fit=crop&w=2000&q=80" alt="" /></div>
+<div class="wrap">
+<div class="place">Sul de Minas, de 1991 a 2026</div>
+<h1>A história da Confluência</h1>
+</div>
+</header>
+
+<section class="block">
+<div class="wrap statement">
+<h2>Vinte e três cafeicultores e um gerente de banco que dizia não.</h2>
+<div class="prose">
+<p>Em 1991, o crédito para o café no Sul de Minas tinha dono: o gerente da agência do banco na praça da cidade. Era ele quem decidia quem plantava, quanto e com que juros. Numa noite de julho, no salão paroquial de Varginha, 23 cafeicultores que tinham ouvido “não” na mesma semana decidiram fazer o próprio banco. Juntaram as economias, cada um comprou a sua cota-parte, e a Cooperativa de Crédito Rural dos Cafeicultores do Sul de Minas abriu as portas numa sala alugada, com um cofre emprestado e dois funcionários.</p>
+<p>O primeiro presidente foi José Brandão, dono de uma fazenda de 80 hectares em Três Pontas, que repetia nas assembleias a frase pintada até hoje na parede da sede: “aqui, quem toma o dinheiro é dono do banco”. Durante quinze anos, foi exatamente isso. Os cooperados eram vizinhos, as reuniões aconteciam depois da missa e o crédito era decidido por quem conhecia a lavoura de quem pedia.</p>
+<p>Em 2006, a cooperativa abriu as portas a qualquer pessoa e mudou de nome. Confluência, explicou o conselho na época, era o lugar onde as águas se encontram. Vieram as incorporações, os postos nas cidades vizinhas, depois em Belo Horizonte, em Campinas e, em 2025, no Espírito Santo. O aplicativo chegou na pandemia, e com ele dezenas de milhares de cooperados que nunca pisaram num posto. Hoje, 110 mil pessoas e empresas são donas da Confluência. Quase nenhuma conhece a outra.</p>
+</div>
+</div>
+</section>
+
+<section class="block" style="padding-top:0">
+<div class="wrap">
+<h2 class="sec">Onde a Confluência está</h2>
+<div class="reach">
+<div><div class="r-when">Desde 1991</div><h4>Sul de Minas</h4><p>Varginha e 14 municípios em volta. A sede, os fundadores e 40% da carteira, quase toda em café.</p></div>
+<div><div class="r-when">Desde 2012</div><h4>Centro-Oeste</h4><p>Divinópolis e região, por incorporação. Comércio, serviços e pequenas indústrias.</p></div>
+<div><div class="r-when">Desde 2016</div><h4>Belo Horizonte</h4><p>Quatro postos e a maior base de cooperados urbanos, que usam quase só o aplicativo.</p></div>
+<div><div class="r-when">Desde 2023</div><h4>Campinas</h4><p>Um posto para os cooperados que se mudaram para São Paulo e não quiseram sair.</p></div>
+<div><div class="r-when">Desde 2025</div><h4>Linhares</h4><p>No Espírito Santo, perto da foz do Rio Doce, pela incorporação de uma pequena cooperativa local.</p></div>
+</div>
+</div>
+</section>
+
+<div class="wrap" style="padding-bottom:112px">
+<a href="#" class="next" onclick="return show('stakeholders')">
+<div>
+<div class="kicker">Capítulo 1</div>
+<h3>Os stakeholders da Confluência</h3>
+</div>
+<span class="go">Abrir o capítulo</span>
+</a>
+</div>
+</main>
+
+<!-- ═════════ CAPÍTULO 1 · STAKEHOLDERS ═════════ -->
+<main id="stakeholders" class="page">
+<header class="opening">
+<div class="duo"><img src="https://images.unsplash.com/photo-1572293071277-ef1b3e761045?auto=format&fit=crop&w=2000&q=80" alt="" /></div>
+<div class="wrap">
+<div class="place">Capítulo 1 · Sul de Minas, de 1991 a 2026</div>
+<h1>Os stakeholders da Confluência</h1>
+<p class="sub">Trinta e cinco anos de crescimento, 110 mil donos com um voto cada, um conselho de cafeicultores e uma diretora que veio de banco.</p>
+</div>
+</header>
+
+<section class="block">
+<div class="wrap">
+<ol class="chrono">
+<li class="beat"><div class="year">1991</div><p>Vinte e três cafeicultores fundam, no salão paroquial de Varginha, a Cooperativa de Crédito Rural dos Cafeicultores do Sul de Minas. Cada um compra a sua cota-parte. O primeiro presidente é José Brandão, de Três Pontas.</p><div class="duo live"><img src="https://images.unsplash.com/photo-1775434657007-549ae5d21bd4?auto=format&fit=crop&w=640&h=480&q=75" alt="Mãos colhendo cerejas de café maduras" loading="lazy" /></div></li>
+<li class="beat"><div class="year">2006</div><p>A cooperativa passa a ser de livre admissão, aberta a qualquer pessoa ou empresa, e adota o nome Confluência. Em seis anos, o número de cooperados triplica.</p><div class="duo live"><img src="https://images.unsplash.com/photo-1764800821322-7beb0ff6ce03?auto=format&fit=crop&w=640&h=480&q=75" alt="Praça de uma cidade pequena com a torre da igreja" loading="lazy" /></div></li>
+<li class="beat plain"><div class="year">2012</div><p>Por decisão da Central, a Confluência incorpora uma cooperativa de Divinópolis que estava em dificuldades. Chegam o Centro-Oeste mineiro e os primeiros milhares de pequenas empresas cooperadas.</p></li>
+<li class="beat"><div class="year">2020</div><p>Na pandemia, o aplicativo vira o principal posto de atendimento. Em dois anos, entram 50 mil cooperados de Belo Horizonte, de Campinas e de cidades onde a Confluência nem tem posto. Muitos abrem a conta pelo Pix e pelo cartão sem anuidade.</p><div class="duo live"><img src="https://images.unsplash.com/photo-1609921141835-710b7fa6e438?auto=format&fit=crop&w=640&h=480&q=75" alt="Mão segurando um celular" loading="lazy" /></div></li>
+<li class="beat plain"><div class="year">2024</div><p>Para separar quem decide a estratégia de quem toca a operação, o Conselho de Administração, presidido por Antônio Carlos Brandão, o Toninho, neto do fundador, contrata pela primeira vez uma diretora executiva de fora: Helena Vilela, vinte anos de banco privado em Belo Horizonte.</p></li>
+<li class="beat"><div class="year">2025</div><p>A Central pede, e a Confluência incorpora uma pequena cooperativa de Linhares, no Espírito Santo, com 6 mil cooperados: pescadores, agricultores familiares e comerciantes do Baixo Rio Doce, muitos deles atingidos pelo rompimento da barragem de Mariana, dez anos antes.</p><div class="duo live"><img src="https://images.unsplash.com/photo-1786641657477-903a83891960?auto=format&fit=crop&w=640&h=480&q=75" alt="Barcos de pesca atracados num rio ao entardecer" loading="lazy" /></div></li>
+<li class="beat plain"><div class="year">2026</div><p>O ano não fecha. Uma safra fraca eleva a inadimplência rural, e a Central passa a acompanhar o índice todo mês. As sobras caem pela metade, e a assembleia é a mais tensa da história. Um gerente de Belo Horizonte sai para um banco digital levando parte da carteira. Um prefeito ameaça tirar a folha se o posto da cidade fechar. Os cooperados de Linhares reclamam que ninguém os ouve.</p></li>
+<li class="beat plain"><div class="year"></div><p>Nesse ano, Helena se matricula num MBA da FGV, numa turma formada só por gente de cooperativas de crédito de Minas. Na primeira aula, ouviu que uma organização só é sustentável se sabe de quem depende e quem depende dela. Pensou nos cinco problemas do ano e desconfiou de que não eram cinco. Na reunião do Conselho seguinte, levou a pergunta para a mesa.</p></li>
+</ol>
+</div>
+</section>
+
+<section class="question">
+<div class="duo"><img src="https://images.unsplash.com/photo-1483354483454-4cd359948304?auto=format&fit=crop&w=2000&q=75" alt="" loading="lazy" /></div>
+<div class="wrap">
+<blockquote>Numa cooperativa, o dono e o cliente são a mesma pessoa. Então, de quem a Confluência depende de verdade, e quem depende dela?</blockquote>
+<div class="who">Helena Vilela, diretora executiva</div>
+<p class="then">Toninho ouviu com paciência e respondeu do jeito que o avô respondia: “A Confluência é dos cafeicultores, Helena. O resto é cliente.” Helena decidiu fazer o mapa assim mesmo. É esse mapa que você fará a seguir.</p>
+</div>
+</section>
+
+<section class="block">
+<div class="wrap">
+<div class="task">
+<h2>Os doze stakeholders</h2>
+<div>
+<p>Para cada ator, pergunte: quanto a Confluência depende dele? Isso mede o seu poder. E quanto ele depende da Confluência? Isso mede o seu interesse. Depois, posicione todos na matriz de poder e interesse.</p>
+<p>Lembre que, numa cooperativa, muitos stakeholders são também donos: votam na assembleia, elegem o Conselho e recebem as sobras.</p>
+</div>
+</div>
+
+<div class="dossier">
+<article class="file">
+<div class="duo live"><img src="https://images.unsplash.com/photo-1670927519969-dc5065aa5641?auto=format&fit=crop&w=320&h=320&q=75" alt="Homem de chapéu em pé num campo" loading="lazy" /></div>
+<div><div class="rel">Cooperados · produtores rurais</div><h3>Cafeicultores do Sul de Minas</h3>
+<p>Cerca de 9 mil produtores, 8% dos cooperados, que respondem por 40% da carteira de crédito. Muitos são filhos e netos dos fundadores. Dependem do custeio, do Funcafé e do investimento para cada safra, e conhecem o gerente do posto pelo nome. Ocupam seis das nove cadeiras do Conselho e lotam a assembleia, que muitas vezes decidem sozinhos.</p>
+<div class="stake"><strong>O que está em jogo:</strong> o crédito de cada safra e o controle da cooperativa que as famílias fundaram.</div></div>
+</article>
+<article class="file">
+<div class="duo live"><img src="https://images.unsplash.com/photo-1431540015161-0bf868a2d407?auto=format&fit=crop&w=320&h=320&q=75" alt="Mesa de reunião vazia com cadeiras de madeira" loading="lazy" /></div>
+<div><div class="rel">Governança · órgão eleito</div><h3>Conselho de Administração</h3>
+<p>Nove conselheiros eleitos pela assembleia, seis deles cafeicultores, presididos por Toninho Brandão. Aprova a estratégia e o orçamento, contrata e pode demitir a diretoria. Cada conselheiro é também cooperado, com a carteira da família na casa. A eleição do próximo Conselho é em 2027.</p>
+<div class="stake"><strong>O que está em jogo:</strong> o rumo da cooperativa, a reeleição e o patrimônio que a família mantém na casa.</div></div>
+</article>
+<article class="file">
+<div class="duo live"><img src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=320&h=320&q=75" alt="Mulher de jaqueta cinza em retrato" loading="lazy" /></div>
+<div><div class="rel">Gestão · executiva contratada</div><h3>Helena Vilela</h3>
+<p>Diretora executiva desde 2024, a primeira que não é cooperada fundadora. Conduz a operação, o risco, a tecnologia e as pessoas, com mandato dado pelo Conselho e renovável a cada dois anos. Conhece os números como ninguém, mas boa parte dos cooperados nunca a viu. Deixou uma carreira estável num banco para dirigir a cooperativa.</p>
+<div class="stake"><strong>O que está em jogo:</strong> o cargo, a carreira e a profissionalização que prometeu ao Conselho.</div></div>
+</article>
+<article class="file">
+<div class="duo live"><img src="https://images.unsplash.com/photo-1643256599422-28585417ab3b?auto=format&fit=crop&w=320&h=320&q=75" alt="Homem olhando o celular diante de um prédio alto" loading="lazy" /></div>
+<div><div class="rel">Cooperados · pessoas físicas urbanas</div><h3>Cooperados urbanos</h3>
+<p>Cerca de 77 mil pessoas, 70% dos cooperados, a maioria em Belo Horizonte, Campinas e cidades médias. Trazem 45% dos depósitos, que financiam a carteira rural. Usam quase só o aplicativo, para Pix, cartão e investimentos. Cada um tem um voto, como qualquer cafeicultor, mas só 2% deles participaram da última assembleia. Têm conta em outros dois ou três bancos.</p>
+<div class="stake"><strong>O que está em jogo:</strong> tarifas, rendimento e um aplicativo que funcione.</div></div>
+</article>
+<article class="file">
+<div class="duo live"><img src="https://images.unsplash.com/photo-1462045504115-6c1d931f07d1?auto=format&fit=crop&w=320&h=320&q=75" alt="Caixas de depósito numeradas num banco" loading="lazy" /></div>
+<div><div class="rel">Sistema · cooperativa central</div><h3>Cooperativa Central</h3>
+<p>Reúne 30 cooperativas singulares de Minas e do Espírito Santo. Define padrões de crédito e de risco, faz auditoria, administra a liquidez e é a primeira a ser chamada quando uma singular aperta. Foi ela que pediu as incorporações de Divinópolis e de Linhares. A Confluência é uma das maiores singulares do sistema, mas é uma entre trinta.</p>
+<div class="stake"><strong>O que está em jogo:</strong> a solidez e a reputação do sistema inteiro.</div></div>
+</article>
+<article class="file">
+<div class="duo live"><img src="https://images.unsplash.com/photo-1625795785654-5f676fa27d81?auto=format&fit=crop&w=320&h=320&q=75" alt="Edifício de concreto branco sob céu azul" loading="lazy" /></div>
+<div><div class="rel">Governo · regulador</div><h3>Banco Central do Brasil</h3>
+<p>Autoriza o funcionamento, aprova os administradores eleitos, fiscaliza e pode intervir. Exige capital, gestão de riscos e uma política de responsabilidade social, ambiental e climática. Para o Banco Central, a Confluência é uma entre centenas de cooperativas de crédito do país.</p>
+<div class="stake"><strong>O que está em jogo:</strong> a estabilidade do sistema financeiro e a proteção de quem deposita.</div></div>
+</article>
+<article class="file">
+<div class="duo live"><img src="https://images.unsplash.com/photo-1524350876685-274059332603?auto=format&fit=crop&w=320&h=320&q=75" alt="Grãos de café numa saca" loading="lazy" /></div>
+<div><div class="rel">Fornecedores de recursos · repasses</div><h3>BNDES e BDMG</h3>
+<p>Fornecem os recursos do Plano Safra, do Funcafé e de outras linhas de fomento que a Confluência repassa aos cooperados com juros menores. Metade da carteira rural sai desses repasses, e sem eles a cooperativa não teria como competir com os bancos no crédito rural. Para os dois bancos, a Confluência é um entre dezenas de agentes repassadores no estado.</p>
+<div class="stake"><strong>O que está em jogo:</strong> a boa aplicação dos recursos públicos e o volume repassado.</div></div>
+</article>
+<article class="file">
+<div class="duo live"><img src="https://images.unsplash.com/photo-1781450031570-8f9c972f2d3b?auto=format&fit=crop&w=320&h=320&q=75" alt="Homem trabalhando numa loja pequena" loading="lazy" /></div>
+<div><div class="rel">Cooperados · pessoas jurídicas</div><h3>Pequenas empresas cooperadas</h3>
+<p>Cerca de 18 mil comércios, oficinas, prestadores de serviço e pequenas indústrias, a maioria no Centro-Oeste e no Sul de Minas. Para muitas, a Confluência é a única instituição que empresta capital de giro sem exigir imóvel em garantia. Nenhuma passa de 0,3% da carteira.</p>
+<div class="stake"><strong>O que está em jogo:</strong> o capital de giro, a maquininha e a folha de pagamento do mês.</div></div>
+</article>
+<article class="file">
+<div class="duo live"><img src="https://images.unsplash.com/photo-1712114123182-c239c5205d22?auto=format&fit=crop&w=320&h=320&q=75" alt="Homem na margem de um rio segurando um peixe" loading="lazy" /></div>
+<div><div class="rel">Cooperados · recém-incorporados</div><h3>Cooperados de Linhares</h3>
+<p>Seis mil pescadores, agricultores familiares e comerciantes do Baixo Rio Doce, que perderam em 2025 a cooperativa que era deles. O posto continua no mesmo lugar, mas o gerente agora vem de Minas e as decisões são tomadas em Varginha. Muitos estão recebendo as indenizações do acordo de Mariana e não sabem bem o que fazer com o dinheiro. São 5% dos cooperados.</p>
+<div class="stake"><strong>O que está em jogo:</strong> o crédito local, a indenização guardada e a sensação de que a cooperativa ainda é deles.</div></div>
+</article>
+<article class="file">
+<div class="duo live"><img src="https://images.unsplash.com/photo-1484863137850-59afcfe05386?auto=format&fit=crop&w=320&h=320&q=75" alt="Mulher sentada diante de uma mesa de trabalho" loading="lazy" /></div>
+<div><div class="rel">Colaboradores · postos de atendimento</div><h3>Colaboradores dos postos</h3>
+<p>Seiscentas pessoas em 38 postos, a maioria nas cidades do interior. Têm metas de consórcio, seguro e previdência. São eles que o cooperado conhece pelo nome, e muitos cooperados dizem que são clientes do gerente, não da cooperativa. Bancos digitais e outras cooperativas têm procurado os melhores gerentes com salários até 30% maiores.</p>
+<div class="stake"><strong>O que está em jogo:</strong> emprego, metas, carreira e a relação construída com cada cooperado.</div></div>
+</article>
+<article class="file">
+<div class="duo live"><img src="https://images.unsplash.com/photo-1786204030604-1814bd7d7ddb?auto=format&fit=crop&w=320&h=320&q=75" alt="Igreja colonial branca numa rua de paralelepípedos" loading="lazy" /></div>
+<div><div class="rel">Poder público e comunidade · municípios</div><h3>Prefeituras e comunidades</h3>
+<p>Em nove municípios, a Confluência é a única instituição financeira. É ali que se recebe o salário, se paga o boleto e se saca a aposentadoria. Quatro prefeituras mantêm na cooperativa a folha e parte dos recursos do município. Três desses postos dão prejuízo. Para a Confluência, os depósitos das prefeituras pesam pouco no total.</p>
+<div class="stake"><strong>O que está em jogo:</strong> ter onde receber, pagar e sacar sem viajar para a cidade vizinha.</div></div>
+</article>
+<article class="file">
+<div class="duo live"><img src="https://images.unsplash.com/photo-1758270704925-fa59d93119c1?auto=format&fit=crop&w=320&h=320&q=75" alt="Professor diante de alunos numa sala de aula" loading="lazy" /></div>
+<div><div class="rel">Representação · organização estadual</div><h3>Sistema Ocemg</h3>
+<p>Representa as cooperativas mineiras de todos os ramos, defende o setor junto ao governo e oferece capacitação. A Confluência contribui, participa dos eventos e manda colaboradores para os cursos. A Ocemg não depende da Confluência, e a Confluência não depende da Ocemg para funcionar no dia a dia.</p>
+<div class="stake"><strong>O que está em jogo:</strong> a força e a imagem do cooperativismo mineiro.</div></div>
+</article>
+</div>
+
+<div class="classify">
+<div class="task">
+<h2>A classificação</h2>
+<div>
+<p>A turma se divide em cinco grupos. Cada grupo posiciona os doze stakeholders na matriz de poder e interesse, com uma frase de justificativa para cada um.</p>
+<p>Avaliem cada stakeholder como ele age hoje. Quem ainda não age em conjunto, como os cooperados urbanos ou os colaboradores, é avaliado como está: cada um por si.</p>
+</div>
+</div>
+<div class="crit">
+<div><span class="k">Poder</span><p>O quanto a Confluência depende deles.</p></div>
+<div><span class="k">Interesse</span><p>O quanto eles dependem da Confluência.</p></div>
+</div>
+<div class="matrix blank">
+<div class="axis-y"><span>Alto</span><b>PODER</b><span>Baixo</span></div>
+<div class="quads">
+<div class="quad q-hl"><h4>Alto poder, baixo interesse</h4></div>
+<div class="quad q-hh"><h4>Alto poder, alto interesse</h4></div>
+<div class="quad q-ll"><h4>Baixo poder, baixo interesse</h4></div>
+<div class="quad q-lh"><h4>Baixo poder, alto interesse</h4></div>
+</div>
+</div>
+<div class="axis-x"><span>Baixo</span><b>INTERESSE</b><span>Alto</span></div>
+</div>
+
+<div class="envelopes-inline">
+<div class="task" style="margin-bottom:40px">
+<h2>Os envelopes</h2>
+<div>
+<p>Cada grupo abre o seu envelope só quando o professor autorizar e der a senha. Diante do acontecimento, revejam a matriz.</p>
+</div>
+</div>
+<div class="envs">
+<button type="button" class="env" data-env="1" aria-controls="ev-1" aria-expanded="false"><span class="flap" aria-hidden="true"></span><span class="seal" aria-hidden="true">1</span><span class="env-label">Grupo 1</span><span class="env-state">Fechado</span></button>
+<button type="button" class="env" data-env="2" aria-controls="ev-2" aria-expanded="false"><span class="flap" aria-hidden="true"></span><span class="seal" aria-hidden="true">2</span><span class="env-label">Grupo 2</span><span class="env-state">Fechado</span></button>
+<button type="button" class="env" data-env="3" aria-controls="ev-3" aria-expanded="false"><span class="flap" aria-hidden="true"></span><span class="seal" aria-hidden="true">3</span><span class="env-label">Grupo 3</span><span class="env-state">Fechado</span></button>
+<button type="button" class="env" data-env="4" aria-controls="ev-4" aria-expanded="false"><span class="flap" aria-hidden="true"></span><span class="seal" aria-hidden="true">4</span><span class="env-label">Grupo 4</span><span class="env-state">Fechado</span></button>
+<button type="button" class="env" data-env="5" aria-controls="ev-5" aria-expanded="false"><span class="flap" aria-hidden="true"></span><span class="seal" aria-hidden="true">5</span><span class="env-label">Grupo 5</span><span class="env-state">Fechado</span></button>
+</div>
+
+<form class="env-lock" id="env-lock" hidden autocomplete="off">
+<label for="env-pw">Senha do envelope <span id="env-n"></span></label>
+<input id="env-pw" type="password" inputmode="text" autocapitalize="none" />
+<button type="submit">Abrir</button>
+<span class="env-err" id="env-err" role="status"></span>
+</form>
+
+<div class="events">
+<article class="event" id="ev-1" hidden>
+<div>
+<div class="ev-group">Envelope do Grupo 1</div>
+<h3>A geada</h3>
+</div>
+<div>
+<div class="ev-body">
+<p>Numa madrugada de julho, a temperatura cai a dois graus negativos no Sul de Minas. Em três dias, os técnicos estimam que um terço das lavouras da região perdeu a próxima safra. Na semana seguinte, 1.400 cafeicultores pedem prorrogação das parcelas. A inadimplência rural da Confluência, que já preocupava, dobra em um mês.</p>
+<p>A Central marca uma visita para a semana seguinte. No e-mail, o superintendente lembra que o fundo do sistema cobre as singulares em dificuldade e pede “um plano de recomposição em 30 dias”.</p>
+</div>
+<div class="ev-toninho"><h4>Toninho propõe</h4><p>Prorrogar todo mundo, sem análise caso a caso. “A cooperativa é deles. Se não for para segurar o cafeicultor na geada, ela existe para quê?”</p></div>
+<div class="ev-q">
+<h4>Diante do acontecimento</h4>
+<p>Algum stakeholder muda de lugar na matriz de vocês? Para onde, e por quê?</p>
+</div>
+</div>
+</article>
+<article class="event" id="ev-2" hidden>
+<div>
+<div class="ev-group">Envelope do Grupo 2</div>
+<h3>A chapa do aplicativo</h3>
+</div>
+<div>
+<div class="ev-body">
+<p>A Confluência passa a permitir o voto pelo aplicativo na assembleia geral. Três semanas antes da eleição do Conselho, um grupo de cooperados de Belo Horizonte e de Campinas inscreve uma chapa de oposição, a primeira em 35 anos. Ninguém nela planta café. A proposta é simples: menos tarifa, mais rendimento e sobras distribuídas pelo volume de depósitos, não pelo de crédito.</p>
+<p>Em dez dias, um vídeo da chapa explicando que “70% dos donos nunca foram ouvidos” passa de 40 mil visualizações. O número de cooperados que confirmam presença virtual na assembleia já é maior que o total de votantes da eleição anterior.</p>
+</div>
+<div class="ev-toninho"><h4>Toninho propõe</h4><p>Voltar atrás no voto pelo aplicativo “por questões de segurança” e manter a assembleia presencial em Varginha, como sempre foi.</p></div>
+<div class="ev-q">
+<h4>Diante do acontecimento</h4>
+<p>Algum stakeholder muda de lugar na matriz de vocês? Para onde, e por quê?</p>
+</div>
+</div>
+</article>
+<article class="event" id="ev-3" hidden>
+<div>
+<div class="ev-group">Envelope do Grupo 3</div>
+<h3>O gerente que saiu</h3>
+</div>
+<div>
+<div class="ev-body">
+<p>Marcos Teixeira era gerente do maior posto de Belo Horizonte havia onze anos. Atendia pessoalmente as 300 maiores empresas cooperadas da capital, que ligavam para o celular dele, não para o posto. Na segunda-feira, pediu demissão. Na quarta, já era gerente de relacionamento de um banco digital, com salário 40% maior.</p>
+<p>Em um mês, 180 daquelas empresas transferem as contas e a folha de pagamento para o banco novo. No posto, outros três gerentes começam a atualizar o currículo. No grupo de mensagens dos colaboradores, alguém escreve: “Quem leva os cooperados somos nós.”</p>
+</div>
+<div class="ev-toninho"><h4>Toninho propõe</h4><p>Processar o Marcos por levar a carteira e “dar o exemplo para os outros”, e não mexer em salário de ninguém. “Cooperativa não é banco.”</p></div>
+<div class="ev-q">
+<h4>Diante do acontecimento</h4>
+<p>Algum stakeholder muda de lugar na matriz de vocês? Para onde, e por quê?</p>
+</div>
+</div>
+</article>
+<article class="event" id="ev-4" hidden>
+<div>
+<div class="ev-group">Envelope do Grupo 4</div>
+<h3>O posto que dá prejuízo</h3>
+</div>
+<div>
+<div class="ev-body">
+<p>Para recompor o resultado, a diretoria propõe fechar três postos deficitários. Um deles fica numa cidade de 6 mil habitantes, onde a Confluência é a única instituição financeira. O banco mais próximo está a 40 quilômetros, numa estrada de terra.</p>
+<p>No dia seguinte, o prefeito vai à rádio local. Anuncia que vai retirar da Confluência a folha da prefeitura e os recursos do município, e que a Câmara aprovou uma moção de repúdio. Aposentados fazem fila na porta do posto para sacar o dinheiro “antes que feche”. A história chega a um jornal de Belo Horizonte.</p>
+</div>
+<div class="ev-toninho"><h4>Toninho propõe</h4><p>Fechar os três postos de uma vez e não dar entrevista. “Em um mês a cidade esquece. O cooperado que quiser atendimento tem o aplicativo.”</p></div>
+<div class="ev-q">
+<h4>Diante do acontecimento</h4>
+<p>Algum stakeholder muda de lugar na matriz de vocês? Para onde, e por quê?</p>
+</div>
+</div>
+</article>
+<article class="event" id="ev-5" hidden>
+<div>
+<div class="ev-group">Envelope do Grupo 5</div>
+<h3>O fundo de Linhares</h3>
+</div>
+<div>
+<div class="ev-body">
+<p>Um ano depois da incorporação, os cooperados de Linhares descobrem que o fundo social da antiga cooperativa, que bancava cursos para filhos de pescadores, foi somado ao fundo da Confluência e hoje financia projetos no Sul de Minas. No mesmo mês, o posto de Linhares bate a meta de previdência privada vendendo planos a pescadores que acabaram de receber a indenização do acordo de Mariana.</p>
+<p>A associação de pescadores leva o caso à imprensa capixaba e ao Ministério Público. Os cooperados recolhem assinaturas para uma assembleia extraordinária e procuram a chapa de oposição de Belo Horizonte para somar votos.</p>
+</div>
+<div class="ev-toninho"><h4>Toninho propõe</h4><p>Responder que a incorporação foi aprovada em assembleia e que “agora é tudo uma cooperativa só”. Sobre a previdência, nenhuma palavra: “Ninguém foi obrigado a comprar nada.”</p></div>
+<div class="ev-q">
+<h4>Diante do acontecimento</h4>
+<p>Algum stakeholder muda de lugar na matriz de vocês? Para onde, e por quê?</p>
+</div>
+</div>
+</article>
+</div>
+</div>
+
+<div class="key-link"><button type="button" class="reset" id="env-reset">Fechar todos os envelopes</button> · <a href="#" onclick="return show('gabarito')">Gabarito da matriz</a></div>
+</div>
+</section>
+</main>
+
+<!-- ═════════ GABARITO (fora do menu: uso do professor) ═════════ -->
+<main id="gabarito" class="page">
+<header class="opening">
+<div class="duo"><img src="https://images.unsplash.com/photo-1534775635547-42a604a58f1a?auto=format&fit=crop&w=2000&q=75" alt="" /></div>
+<div class="wrap">
+<div class="place">Gabarito</div>
+<h1>Matriz de poder e interesse</h1>
+<p class="sub">Poder: o quanto a Confluência depende deles. Interesse: o quanto eles dependem da Confluência.</p>
+</div>
+</header>
+
+<section class="block">
+<div class="wrap">
+<div class="matrix-wrap">
+<div class="matrix">
+<div class="axis-y"><span>Alto</span><b>PODER</b><span>Baixo</span></div>
+<div class="quads">
+<div class="quad q-hl"><h4>Alto poder, baixo interesse</h4><ul><li>Cooperados urbanos 🗳️</li><li>Cooperativa Central</li><li>Banco Central</li><li>BNDES e BDMG</li></ul></div>
+<div class="quad q-hh"><h4>Alto poder, alto interesse</h4><ul><li>Cafeicultores 🗳️</li><li>Conselho de Administração 🗳️</li><li>Helena Vilela</li></ul></div>
+<div class="quad q-ll"><h4>Baixo poder, baixo interesse</h4><ul><li>Sistema Ocemg</li></ul></div>
+<div class="quad q-lh"><h4>Baixo poder, alto interesse</h4><ul><li>Pequenas empresas 🗳️</li><li>Cooperados de Linhares 🗳️</li><li>Colaboradores dos postos</li><li>Prefeituras e comunidades</li></ul></div>
+</div>
+</div>
+<div class="axis-x"><span>Baixo</span><b>INTERESSE</b><span>Alto</span></div>
+<p class="legend">🗳️ Vota na assembleia: é dono da cooperativa, com um voto por cooperado, qualquer que seja o tamanho da conta.</p>
+</div>
+
+<h2 class="sec">Justificativas</h2>
+<ul class="why">
+<li><div class="who">Cafeicultores<small>Alto poder, alto interesse</small></div><p>A Confluência depende deles para 40% da carteira, para lotar a assembleia e para compor o Conselho. Eles dependem dela para cada safra: custeio, Funcafé e investimento, de um credor que conhece a lavoura de cada um.</p></li>
+<li><div class="who">Conselho de Administração<small>Alto poder, alto interesse</small></div><p>Aprova a estratégia e pode demitir a diretoria: a cooperativa depende das decisões dele. E cada conselheiro depende dela, como cooperado, como patrimônio da família e como projeto político até a eleição de 2027.</p></li>
+<li><div class="who">Helena Vilela<small>Alto poder, alto interesse</small></div><p>Conduz toda a operação, e a cooperativa depende do que ela sabe e decide. Ela depende da cooperativa para o cargo e para a carreira, com mandato renovável pelo Conselho a cada dois anos.</p></li>
+<li><div class="who">Cooperados urbanos<small>Alto poder, baixo interesse</small></div><p>A Confluência depende deles para 45% dos depósitos, que financiam a carteira rural, e eles somam 70% dos votos. Eles dependem pouco dela: têm conta em outros bancos e trocam de instituição com um clique. Estão no alto pelo dinheiro e pelo voto que somam, ainda que cada um, sozinho, pese pouco.</p></li>
+<li><div class="who">Cooperativa Central<small>Alto poder, baixo interesse</small></div><p>Define padrões, audita, administra a liquidez e decide incorporações: a Confluência depende dela. Para a Central, a Confluência é uma entre trinta singulares, ainda que grande.</p></li>
+<li><div class="who">Banco Central<small>Alto poder, baixo interesse</small></div><p>Autoriza, fiscaliza e pode intervir. Para ele, a Confluência é uma entre centenas de cooperativas de crédito.</p></li>
+<li><div class="who">BNDES e BDMG<small>Alto poder, baixo interesse</small></div><p>Metade da carteira rural sai dos repasses, e sem eles a cooperativa perde competitividade no crédito rural. Para os dois bancos, a Confluência é um entre dezenas de repassadores.</p></li>
+<li><div class="who">Pequenas empresas cooperadas<small>Baixo poder, alto interesse</small></div><p>Nenhuma passa de 0,3% da carteira. Mas muitas só conseguem capital de giro na Confluência, sem imóvel em garantia.</p></li>
+<li><div class="who">Cooperados de Linhares<small>Baixo poder, alto interesse</small></div><p>São 5% dos cooperados, com pouco peso na carteira e na assembleia. Mas dependem do posto local para o crédito e para guardar as indenizações, e não têm outra cooperativa por perto.</p></li>
+<li><div class="who">Colaboradores dos postos<small>Baixo poder, alto interesse</small></div><p>Individualmente substituíveis, ainda que com custo de formação. Dependem da cooperativa para emprego e renda. Mas guardam a relação com o cooperado, e é por isso que podem subir.</p></li>
+<li><div class="who">Prefeituras e comunidades<small>Baixo poder, alto interesse</small></div><p>Os depósitos municipais pesam pouco no total da Confluência. Mas, em nove cidades, sem o posto não há onde receber, pagar e sacar.</p></li>
+<li><div class="who">Sistema Ocemg<small>Baixo poder, baixo interesse</small></div><p>Representa e capacita o setor. Nenhum dos dois lados depende do outro para funcionar no dia a dia.</p></li>
+</ul>
+
+<h2 class="sec" style="margin-top:96px">Os envelopes</h2>
+<ul class="why">
+<li><div class="who">Grupo 1: A geada<small>Cooperativa Central: de baixo para alto interesse</small></div><p>Com a inadimplência dobrando, a solidez do sistema passa a depender da Confluência, e o fundo que cobre as singulares pode ser chamado. A Central já tinha poder; agora tem motivo para usá-lo. <strong>Como chegou lá:</strong> o problema de um virou risco de todos.</p></li>
+<li><div class="who">Grupo 2: A chapa do aplicativo<small>Cooperados urbanos: de baixo para alto interesse</small></div><p>Eles sempre tiveram os votos; faltava motivo para usá-los. A chapa transforma clientes em donos que disputam o rumo da cooperativa e as sobras. <strong>Como chegou lá:</strong> juntou-se a outros iguais, e a votação pelo aplicativo baixou o custo de participar.</p></li>
+<li><div class="who">Grupo 3: O gerente que saiu<small>Colaboradores dos postos: de baixo para alto poder</small></div><p>Um gerente sozinho parecia substituível. Mas o cooperado seguiu o gerente, não a marca, e a Confluência descobre que depende de quem guarda a relação. <strong>Como chegou lá:</strong> levou consigo quem tem poder, os cooperados.</p></li>
+<li><div class="who">Grupo 4: O posto que dá prejuízo<small>Prefeituras e comunidades: de baixo para alto poder</small></div><p>Os depósitos do município pesam pouco. A rádio, a Câmara, a fila de aposentados e o jornal da capital pesam muito mais, e a reputação de cooperativa que cuida da cidade está em jogo em todos os postos. <strong>Como chegou lá:</strong> acionou quem tem voz.</p></li>
+<li><div class="who">Grupo 5: O fundo de Linhares<small>Cooperados de Linhares: de baixo para alto poder</small></div><p>Seis mil votos não decidem uma assembleia. Somados à chapa de Belo Horizonte, ao Ministério Público e à imprensa, podem decidir. <strong>Como chegou lá:</strong> juntou-se a outros e acionou quem tem poder.</p></li>
+</ul>
+<p class="prof-note">Para a plenária: numa empresa, quem está embaixo na matriz só sobe juntando-se a outros ou acionando quem tem poder. Numa cooperativa, há um terceiro caminho: a urna. Metade dos stakeholders vota, e um voto de pescador vale o mesmo que um voto de cafeicultor. Quando a cooperativa trata o cooperado como cliente, ele age como cliente e vai embora. Quando ele se lembra de que é dono, a matriz inteira se mexe.</p>
+</div>
+</section>
+</main>
+
+<footer>
+<div class="wrap">
+<span>A Confluência é uma cooperativa fictícia, criada para fins de ensino. Pessoas, números e acontecimentos são ilustrativos.</span>
+<span>MBA FGV, 2026</span>
+</div>
+</footer>
+
+<script>
+  function show(pageId) {
+    document.querySelectorAll('.page').forEach(p => p.classList.toggle('active', p.id === pageId));
+    document.querySelectorAll('.topnav a.link').forEach(a => a.classList.toggle('active', a.dataset.page === pageId));
+    window.scrollTo(0, 0);
+    return false;
+  }
+
+  (function () {
+    const KEY = 'confluencia-cap1-envelopes';
+    let opened = [];
+    try { opened = JSON.parse(localStorage.getItem(KEY) || '[]'); } catch (e) {}
+    const save = () => { try { localStorage.setItem(KEY, JSON.stringify(opened)); } catch (e) {} };
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const envs = document.querySelectorAll('.env');
+    function paint() {
+      envs.forEach(b => {
+        const n = b.dataset.env, isOpen = opened.includes(n);
+        b.classList.toggle('open', isOpen);
+        b.setAttribute('aria-expanded', isOpen);
+        b.querySelector('.env-state').textContent = isOpen ? 'Aberto' : (b.classList.contains('armed') ? 'Digite a senha' : 'Fechado');
+        document.getElementById('ev-' + n).hidden = !isOpen;
+      });
+    }
+    const HASH = {"1": "442db80f8d1b60362496011a1402e34e1bd0ff1e87b28f4a0b66e4525176b566", "2": "f91857cc62c2ad8fafaaa09e08f2a017f98a05375ef14913f32408ae6aeed131", "3": "a052f442bfc4c10cfe4a0016805d54156a15c226d9aa88beb53224f254376619", "4": "f265bf053879057122dea030ca9eac8e753b501827083f9bb154966b8e19adf0", "5": "03ba2f6d429f79c1e356b4bae7fc53c05b03cc3c9c999f2881d3064b6110dd61"};
+    const lock = document.getElementById('env-lock'), pw = document.getElementById('env-pw'), err = document.getElementById('env-err');
+    let current = null;
+    async function sha(t) { const d = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(t)); return [...new Uint8Array(d)].map(x => x.toString(16).padStart(2, '0')).join(''); }
+    envs.forEach(b => {
+      b.addEventListener('click', () => {
+        const n = b.dataset.env, ev = document.getElementById('ev-' + n);
+        if (opened.includes(n)) { ev.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' }); return; }
+        envs.forEach(o => o.classList.remove('armed'));
+        b.classList.add('armed'); current = n;
+        document.getElementById('env-n').textContent = n;
+        lock.hidden = false; err.textContent = ''; pw.value = ''; pw.focus();
+        paint();
+      });
+    });
+    lock.addEventListener('submit', async e => {
+      e.preventDefault();
+      if (!current) return;
+      const n = current, h = await sha('confluencia-' + n + ':' + pw.value.trim().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, ''));
+      if (h !== HASH[n]) { err.textContent = 'Senha incorreta.'; pw.select(); return; }
+      lock.hidden = true; current = null;
+      envs.forEach(o => o.classList.remove('armed'));
+      opened.push(n); opened.sort(); save(); paint();
+      const ev = document.getElementById('ev-' + n);
+      ev.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' });
+    });
+    document.getElementById('env-reset').addEventListener('click', () => {
+      opened = []; save(); current = null; lock.hidden = true;
+      envs.forEach(o => o.classList.remove('armed')); paint();
+    });
+    paint();
+  })();
+</script>
+</body>
+</html>
